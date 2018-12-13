@@ -5,6 +5,13 @@ go:
   - '1.10.x'
   - '1.11.x'
 # - master
+env:
+  global:
+    - ELASTICSEARCH_SNIFF=false
+    - TF_ACC=1 
+  matrix:
+    - ES_VERSION=5.5.3 ELASTICSEARCH_URL=http://localhost:9200
+    - ES_VERSION=6.5.1 XPACK=true ELASTICSEARCH_URL=http://localhost:9210
 
 stages:
   - build
@@ -14,10 +21,4 @@ stages:
 jobs:
   include:
     - stage: build
-      env:
-        global:
-          - ELASTICSEARCH_SNIFF=false
-          - TF_ACC=1 
-        matrix:
-          - ES_VERSION=5.5.3 ELASTICSEARCH_URL=http://localhost:9200
-          - ES_VERSION=6.5.1 XPACK=true ELASTICSEARCH_URL=http://localhost:9210
+    
