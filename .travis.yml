@@ -21,5 +21,9 @@ stages:
 jobs:
   include:
     - stage: deploy
-    
+      script:
+      - if [ "${TRAVIS_TAG::1}" = "v" ];
+      then
+        curl -sL https://git.io/goreleaser | bash;
+      fi
 
