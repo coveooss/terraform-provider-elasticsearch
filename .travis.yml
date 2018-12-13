@@ -1,0 +1,37 @@
+sudo: required
+language: go
+go:
+  - '1.9.x'
+  - '1.10.x'
+  - '1.11.x'
+# - master
+env:
+  global:
+    - ELASTICSEARCH_SNIFF=false
+    - TF_ACC=1 
+  matrix:
+    - ES_VERSION=5.5.3 ELASTICSEARCH_URL=http://localhost:9200
+    - ES_VERSION=6.5.1 XPACK=true ELASTICSEARCH_URL=http://localhost:9210
+addons:
+  ssh_known_hosts: github.com
+  apt:
+    update: true
+    packages:
+    - docker-ce
+services:
+- docker
+
+stages:
+  - test
+  - name: deploy
+    if: branch = master
+
+jobs:
+  include:
+    - stage: deploy
+    - script:
+      - if [ "${TRAVIS_TAG::1}" = "v" ];
+      then
+        curl -sL https://git.io/goreleaser | bash;
+      fi
+
