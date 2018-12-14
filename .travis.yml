@@ -27,7 +27,7 @@ stages:
 
 jobs:
   include:
-  - stage: "Tests"
+  - stage: "Test"
     before_install:
       - if [[ "$TRAVIS_OS_NAME" == "linux" && ! $(which nc)     ]] ; then sudo apt-get install -y netcat ; fi
       - sudo sysctl -w vm.max_map_count=262144
