@@ -46,7 +46,7 @@ jobs:
   include:
   - stage: deploy
     name: "Deploy to Github with GoReleaser"
-    before_install: true
-    install: true
+    before_install: skip
+    install: skip
     script: if [ "${TRAVIS_TAG::1}" = "v" ]; then curl -sL https://git.io/goreleaser | bash; fi
 
