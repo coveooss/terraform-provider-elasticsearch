@@ -40,8 +40,9 @@ script:
 
 stages:
   - test
-  - name: deploy
-    if: branch = master
+  - deploy
+  #- name: deploy
+  #  if: branch = master
 
 jobs:
   include:
