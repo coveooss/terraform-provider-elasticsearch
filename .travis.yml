@@ -31,7 +31,7 @@ before_install:
   - n=0; until [ $n -ge 5 ]; do nc -vz localhost 9210 && break; n=$[$n+1];sleep $((n)); done
 install:
   - export TF_LOG=INFO
-  # - env GO111MODULE=on go mod vendor
+  - env GO111MODULE=on go mod vendor
 script:
   - go build
   - go test -v -cover
