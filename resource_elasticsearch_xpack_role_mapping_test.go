@@ -16,8 +16,8 @@ func TestAccElasticsearchXpackRoleMapping(t *testing.T) {
 	randomName := "test" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckXpack(t) },
-		Providers:    testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccXPackProviders,
 		CheckDestroy: testAccCheckRoleMappingDestroy,
 		Steps: []resource.TestStep{
 			{

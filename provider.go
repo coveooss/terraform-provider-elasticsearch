@@ -16,9 +16,9 @@ import (
 	"github.com/hashicorp/terraform/helper/pathorcontents"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	elastic7 "github.com/olivere/elastic/v7"
 	elastic5 "gopkg.in/olivere/elastic.v5"
 	elastic6 "gopkg.in/olivere/elastic.v6"
-	elastic7 "github.com/olivere/elastic/v7"
 )
 
 var awsUrlRegexp = regexp.MustCompile(`([a-z0-9-]+).es.amazonaws.com$`)
@@ -32,21 +32,6 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("ELASTICSEARCH_URL", nil),
 				Description: "Elasticsearch URL",
 			},
-
-			"sniff": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("ELASTICSEARCH_SNIFF", true),
-				Description: "Set the node sniffing option for the elastic client. Client won't work with sniffing if nodes are not routable.",
-			},
-
-			"healthcheck": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("ELASTICSEARCH_HEALTH", true),
-				Description: "Set the client healthcheck option for the elastic client. Healthchecking is designed for direct access to the cluster.",
-			},
-
 			"username": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -137,8 +122,6 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	rawUrl := d.Get("url").(string)
 	insecure := d.Get("insecure").(bool)
-	sniffing := d.Get("sniff").(bool)
-	healthchecking := d.Get("healthcheck").(bool)
 	cacertFile := d.Get("cacert_file").(string)
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
@@ -151,8 +134,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	opts := []elastic7.ClientOptionFunc{
 		elastic7.SetURL(rawUrl),
 		elastic7.SetScheme(parsedUrl.Scheme),
-		elastic7.SetSniff(sniffing),
-		elastic7.SetHealthcheck(healthchecking),
 	}
 
 	if parsedUrl.User.Username() != "" {
@@ -170,19 +151,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		opts = append(opts, elastic7.SetHttpClient(tlsHttpClient(d)), elastic7.SetSniff(false))
 	}
 
-	username = d.Get("username").(string)
-	password = d.Get("password").(string)
-
-	if parsedUrl.User != nil {
-		username = parsedUrl.User.Username()
-		password, _ = parsedUrl.User.Password()
-		opts = append(opts, elastic7.SetBasicAuth(username, password))
-	} else if username := d.Get("username").(string); username != "" {
-		if password := d.Get("password").(string); password != "" {
-			opts = append(opts, elastic7.SetBasicAuth(username, password))
-		}
-	}
-
 	var relevantClient interface{}
 	client, err := elastic7.NewClient(opts...)
 	if err != nil {
@@ -190,7 +158,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	relevantClient = client
 
-	// Use the v7 client to ping the cluster to determine the version
+	// Use the v6 client to ping the cluster to determine the version
 	info, _, err := client.Ping(rawUrl).Do(context.TODO())
 	if err != nil {
 		return nil, err
