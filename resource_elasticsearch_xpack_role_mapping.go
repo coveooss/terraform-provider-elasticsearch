@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	elastic5 "gopkg.in/olivere/elastic.v5"
 	elastic6 "gopkg.in/olivere/elastic.v6"
+	elastic7 "github.com/olivere/elastic/v7"
 )
 
 func resourceElasticsearchXpackRoleMapping() *schema.Resource {
@@ -67,6 +68,11 @@ func resourceElasticsearchXpackRoleMappingRead(d *schema.ResourceData, m interfa
 	roleMapping, err := xpackGetRoleMapping(d, m, d.Id())
 	if err != nil {
 		fmt.Println("Error during read")
+		if elasticErr, ok := err.(*elastic7.Error); ok && elasticErr.Status == 404 {
+			fmt.Printf("[WARN] Role mapping %s not found. Removing from state\n", d.Id())
+			d.SetId("")
+			return nil
+		}
 		if elasticErr, ok := err.(*elastic6.Error); ok && elasticErr.Status == 404 {
 			fmt.Printf("[WARN] Role mapping %s not found. Removing from state\n", d.Id())
 			d.SetId("")
@@ -103,6 +109,11 @@ func resourceElasticsearchXpackRoleMappingDelete(d *schema.ResourceData, m inter
 	err := xpackDeleteRoleMapping(d, m, d.Id())
 	if err != nil {
 		fmt.Println("Error during destroy")
+		if elasticErr, ok := err.(*elastic7.Error); ok && elasticErr.Status == 404 {
+			fmt.Printf("[WARN] Role mapping %s not found. Resource removed from state\n", d.Id())
+			d.SetId("")
+			return nil
+		}
 		if elasticErr, ok := err.(*elastic6.Error); ok && elasticErr.Status == 404 {
 			fmt.Printf("[WARN] Role mapping %s not found. Resource removed from state\n", d.Id())
 			d.SetId("")
@@ -139,6 +150,9 @@ func buildPutRoleMappingBody(d *schema.ResourceData, m interface{}) (string, err
 }
 
 func xpackPutRoleMapping(d *schema.ResourceData, m interface{}, name string, body string) error {
+	if client, ok := m.(*elastic7.Client); ok {
+		return elastic7PutRoleMapping(client, name, body)
+	}
 	if client, ok := m.(*elastic6.Client); ok {
 		return elastic6PutRoleMapping(client, name, body)
 	}
@@ -149,6 +163,9 @@ func xpackPutRoleMapping(d *schema.ResourceData, m interface{}, name string, bod
 }
 
 func xpackGetRoleMapping(d *schema.ResourceData, m interface{}, name string) (XPackSecurityRoleMapping, error) {
+	if client, ok := m.(*elastic7.Client); ok {
+		return elastic7GetRoleMapping(client, name)
+	}
 	if client, ok := m.(*elastic6.Client); ok {
 		return elastic6GetRoleMapping(client, name)
 	}
@@ -159,6 +176,9 @@ func xpackGetRoleMapping(d *schema.ResourceData, m interface{}, name string) (XP
 }
 
 func xpackDeleteRoleMapping(d *schema.ResourceData, m interface{}, name string) error {
+	if client, ok := m.(*elastic7.Client); ok {
+		return elastic7DeleteRoleMapping(client, name)
+	}
 	if client, ok := m.(*elastic6.Client); ok {
 		return elastic6DeleteRoleMapping(client, name)
 	}
@@ -175,6 +195,10 @@ func elastic5PutRoleMapping(client *elastic5.Client, name string, body string) e
 func elastic6PutRoleMapping(client *elastic6.Client, name string, body string) error {
 	_, err := client.XPackSecurityPutRoleMapping(name).Body(body).Do(context.Background())
 	return err
+}
+
+func elastic7PutRoleMapping(client *elastic7.Client, name string, body string) error {
+	return errors.New("unsupported in elasticv7 client")
 }
 
 func elastic5GetRoleMapping(client *elastic5.Client, name string) (XPackSecurityRoleMapping, error) {
@@ -206,6 +230,11 @@ func elastic6GetRoleMapping(client *elastic6.Client, name string) (XPackSecurity
 	return roleMapping, err
 }
 
+func elastic7GetRoleMapping(client *elastic7.Client, name string) (XPackSecurityRoleMapping, error) {
+	err := errors.New("unsupported in elasticv7 client")
+	return XPackSecurityRoleMapping{}, err
+}
+
 func elastic5DeleteRoleMapping(client *elastic5.Client, name string) error {
 	err := errors.New("unsupported in elasticv5 client")
 	return err
@@ -213,6 +242,11 @@ func elastic5DeleteRoleMapping(client *elastic5.Client, name string) error {
 
 func elastic6DeleteRoleMapping(client *elastic6.Client, name string) error {
 	_, err := client.XPackSecurityDeleteRoleMapping(name).Do(context.Background())
+	return err
+}
+
+func elastic7DeleteRoleMapping(client *elastic7.Client, name string) error {
+	err := errors.New("unsupported in elasticv7 client")
 	return err
 }
 
