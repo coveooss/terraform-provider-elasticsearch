@@ -16,9 +16,9 @@ import (
 	"github.com/hashicorp/terraform/helper/pathorcontents"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	elastic7 "github.com/olivere/elastic/v7"
 	elastic5 "gopkg.in/olivere/elastic.v5"
 	elastic6 "gopkg.in/olivere/elastic.v6"
+	elastic7 "github.com/olivere/elastic/v7"
 )
 
 var awsUrlRegexp = regexp.MustCompile(`([a-z0-9-]+).es.amazonaws.com$`)
@@ -170,16 +170,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		opts = append(opts, elastic7.SetHttpClient(tlsHttpClient(d)), elastic7.SetSniff(false))
 	}
 
-	username := d.Get("username").(string)
-	password := d.Get("password").(string)
+	username = d.Get("username").(string)
+	password = d.Get("password").(string)
 
 	if parsedUrl.User != nil {
 		username = parsedUrl.User.Username()
 		password, _ = parsedUrl.User.Password()
-		opts = append(opts, elastic6.SetBasicAuth(username, password))
+		opts = append(opts, elastic7.SetBasicAuth(username, password))
 	} else if username := d.Get("username").(string); username != "" {
 		if password := d.Get("password").(string); password != "" {
-			opts = append(opts, elastic6.SetBasicAuth(username, password))
+			opts = append(opts, elastic7.SetBasicAuth(username, password))
 		}
 	}
 
@@ -190,7 +190,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	relevantClient = client
 
-	// Use the v6 client to ping the cluster to determine the version
+	// Use the v7 client to ping the cluster to determine the version
 	info, _, err := client.Ping(rawUrl).Do(context.TODO())
 	if err != nil {
 		return nil, err
