@@ -6,17 +6,47 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
+	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	
+	elastic7 "github.com/olivere/elastic/v7"
 	elastic6 "gopkg.in/olivere/elastic.v6"
+	elastic5 "gopkg.in/olivere/elastic.v5"
 )
 
 func TestAccElasticsearchXpackRoleMapping(t *testing.T) {
 
 	randomName := "test" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
+	provider := Provider().(*schema.Provider)
+	err := provider.Configure(&terraform.ResourceConfig{})
+	if err != nil {
+		t.Skipf("err: %s", err)
+	}
+	meta := provider.Meta()
+	var allowed bool
+	var implemented bool
+	switch meta.(type) {
+	case *elastic5.Client:
+		allowed = false
+	case *elastic7.Client:
+		allowed = true
+		implemented = false
+	default:
+		allowed = true
+		implemented = true
+	}
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheck(t) 
+			if !allowed {
+				t.Skip("Xpack only supported on ES >= 6")
+			}
+			if !implemented {
+				t.Skip("XpackRoles not implemented for ES 7. Contributions welcomed")
+			}
+		},
 		Providers:    testAccXPackProviders,
 		CheckDestroy: testAccCheckRoleMappingDestroy,
 		Steps: []resource.TestStep{
