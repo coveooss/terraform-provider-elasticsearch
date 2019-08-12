@@ -2,17 +2,17 @@ sudo: required
 language: go
 go:
   - '1.12'
-# - master
+  - master
+cache:
+  directories:
+    - $HOME/gopath/pkg/mod
 env:
-  # global:
-  #  - ELASTICSEARCH_SNIFF=false
-  #  - TF_ACC=1 
   matrix:
-  #  - ES_VERSION=5.5.3 ELASTICSEARCH_URL=http://localhost:9200
-  #  - ES_VERSION=6.5.1 XPACK=true ELASTICSEARCH_URL=http://localhost:9210
     - ES_VERSION=5.6.16 ES_OSS_IMAGE=elasticsearch:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION} ES_COMMAND="elasticsearch -Epath.repo=/tmp"
-    - ES_VERSION=6.8.0 ES_OSS_IMAGE=docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION} ES_OPENDISTRO_IMAGE=amazon/opendistro-for-elasticsearch:0.9.0
-    - ES_VERSION=7.0.1 ES_OSS_IMAGE=docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+    - ES_VERSION=6.8.0 ES_OSS_IMAGE=docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION} ES_OPENDISTRO_IMAGE=amazon/opendistro-for-elasticsearch:0.9.0 XPACK=1
+    - ES_VERSION=7.0.1 ES_OSS_IMAGE=docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION} XPACK=1
+  allow_failures:
+    - go: master
 
 addons:
   ssh_known_hosts: github.com
@@ -25,20 +25,18 @@ before_install:
   - sudo sysctl -w vm.max_map_count=262144
   - docker-compose pull
   - docker-compose up -d
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" && ! $(which nc)     ]] ; then sudo apt-get install -y netcat ; fi
-  # - docker-compose -f docker-compose/docker-compose-${ES_VERSION}.yml pull
-  # - docker-compose -f docker-compose/docker-compose-${ES_VERSION}.yml up -d
-  # - n=0; until [ $n -ge 5 ]; do nc -vz localhost 9200 && break; n=$[$n+1];sleep $((n)); done
-  # - if [[ "$XPACK" == true ]] ; then n=0; until [ $n -ge 5 ]; do nc -vz localhost 9210 && break; n=$[$n+1];sleep $((n)); done
 install:
   - export ELASTICSEARCH_URL=http://127.0.0.1:9200 
   - export TF_LOG=INFO
   - env GO111MODULE=on go mod vendor
 script:
   - export GO111MODULE=on
-  - wget -q --waitretry=1 --retry-connrefused -T 10 -O - $ELASTICSEARCH_URL
-  - |
-    if [ -n "$ES_OPENDISTRO_IMAGE" ]; then curl -X POST -H 'Content-type: application/json'  -d '{"name":"_warmup","type":"slack","slack":{"url": "http://www.example.com"}}' 127.0.0.1:9220/_opendistro/_alerting/destinations; fi
+  - wget -q --waitretry=5 --tries=50 --retry-connrefused -T 600 -O - http://127.0.0.1:9200
+  - if [ "$XPACK" ]; then wget -q --waitretry=5 --tries=50 --retry-connrefused -T 600 -O - http://elastic:elastic@127.0.0.1:9210; fi
+  - if [ -n "$ES_OPENDISTRO_IMAGE" ]; then wget -q --waitretry=5 --tries=50 --retry-connrefused -T 600 -O - http://127.0.0.1:9220; fi
+  # Opendistro lazily initializes it's indexes, warm it up here :|
+  # https://github.com/opendistro-for-elasticsearch/alerting/issues/60
+  - if [ -n "$ES_OPENDISTRO_IMAGE" ]; then curl -X POST -H 'Content-type: application/json'  -d '{"name":"_warmup","type":"slack","slack":{"url": "http://www.example.com"}}' 127.0.0.1:9220/_opendistro/_alerting/destinations; fi
   - TF_ACC=1 go test -v -cover
 
 stages:

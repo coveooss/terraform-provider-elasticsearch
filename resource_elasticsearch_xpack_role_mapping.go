@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	elastic5 "gopkg.in/olivere/elastic.v5"
-	elastic6 "gopkg.in/olivere/elastic.v6"
 	elastic7 "github.com/olivere/elastic/v7"
+	elastic6 "gopkg.in/olivere/elastic.v6"
+	elastic5 "gopkg.in/olivere/elastic.v5"
 )
 
 func resourceElasticsearchXpackRoleMapping() *schema.Resource {
@@ -193,12 +194,15 @@ func elastic5PutRoleMapping(client *elastic5.Client, name string, body string) e
 }
 
 func elastic6PutRoleMapping(client *elastic6.Client, name string, body string) error {
-	_, err := client.XPackSecurityPutRoleMapping(name).Body(body).Do(context.Background())
+	resp, err := client.XPackSecurityPutRoleMapping(name).Body(body).Do(context.Background())
+	log.Printf("[INFO] put error: %+v, %+v", resp, err)
 	return err
 }
 
 func elastic7PutRoleMapping(client *elastic7.Client, name string, body string) error {
-	return errors.New("unsupported in elasticv7 client")
+	resp, err := client.XPackSecurityPutRoleMapping(name).Body(body).Do(context.Background())
+	log.Printf("[INFO] put error: %+v, %+v", resp, err)
+	return err
 }
 
 func elastic5GetRoleMapping(client *elastic5.Client, name string) (XPackSecurityRoleMapping, error) {
@@ -231,8 +235,27 @@ func elastic6GetRoleMapping(client *elastic6.Client, name string) (XPackSecurity
 }
 
 func elastic7GetRoleMapping(client *elastic7.Client, name string) (XPackSecurityRoleMapping, error) {
-	err := errors.New("unsupported in elasticv7 client")
-	return XPackSecurityRoleMapping{}, err
+	res, err := client.XPackSecurityGetRoleMapping(name).Do(context.Background())
+	if err != nil {
+		return XPackSecurityRoleMapping{}, err
+	}
+	obj := (*res)[name]
+	roleMapping := XPackSecurityRoleMapping{}
+	roleMapping.Name = name
+	roleMapping.Roles = obj.Roles
+	roleMapping.Enabled = obj.Enabled
+	if rules, err := json.Marshal(obj.Rules); err != nil {
+		return roleMapping, err
+	} else {
+		roleMapping.Rules = string(rules)
+	}
+	if metadata, err := json.Marshal(obj.Metadata); err != nil {
+		return roleMapping, err
+	} else {
+		roleMapping.Metadata = string(metadata)
+	}
+
+	return roleMapping, err
 }
 
 func elastic5DeleteRoleMapping(client *elastic5.Client, name string) error {
@@ -246,7 +269,7 @@ func elastic6DeleteRoleMapping(client *elastic6.Client, name string) error {
 }
 
 func elastic7DeleteRoleMapping(client *elastic7.Client, name string) error {
-	err := errors.New("unsupported in elasticv7 client")
+	_, err := client.XPackSecurityDeleteRoleMapping(name).Do(context.Background())
 	return err
 }
 
