@@ -158,7 +158,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	relevantClient = client
 
-	// Use the v6 client to ping the cluster to determine the version
+	// Use the v7 client to ping the cluster to determine the version
 	info, _, err := client.Ping(rawUrl).Do(context.TODO())
 	if err != nil {
 		return nil, err
