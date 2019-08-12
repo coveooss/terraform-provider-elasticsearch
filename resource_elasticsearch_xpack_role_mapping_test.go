@@ -77,7 +77,7 @@ func testAccCheckRoleMappingDestroy(s *terraform.State) error {
 			continue
 		}
 
-		meta := testAccProvider.Meta()
+		meta := testAccXPackProvider.Meta()
 
 		if client, ok := meta.(*elastic6.Client); ok {
 			if _, err := client.XPackSecurityGetRoleMapping(rs.Primary.ID).Do(context.TODO()); err != nil {
@@ -107,7 +107,7 @@ func testCheckRoleMappingExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("No role mapping ID is set")
 		}
 
-		meta := testAccProvider.Meta()
+		meta := testAccXPackProvider.Meta()
 
 		client := meta.(*elastic6.Client)
 		_, err := client.XPackSecurityGetRoleMapping(rs.Primary.ID).Do(context.TODO())
@@ -125,8 +125,8 @@ func testAccRoleMappingResource(resourceName string) string {
 resource "elasticsearch_xpack_role_mapping" "test" {
   role_mapping_name = "%s"
   roles = [
-      "admin",
-      "user",
+    "admin",
+    "user",
   ]
   rules = <<-EOF
   {
@@ -144,7 +144,8 @@ resource "elasticsearch_xpack_role_mapping" "test" {
     ]
   }
   EOF
-  ,
+
+  
   enabled = true
 }
 `, resourceName)
@@ -155,9 +156,9 @@ func testAccRoleMappingResource_Updated(resourceName string) string {
 resource "elasticsearch_xpack_role_mapping" "test" {
   role_mapping_name = "%s"
   roles = [
-      "admin",
-			"user",
-			"guest",
+    "admin",
+	"user",
+	"guest",
   ]
   rules = <<-EOF
   {
@@ -175,7 +176,8 @@ resource "elasticsearch_xpack_role_mapping" "test" {
     ]
   }
   EOF
-  ,
+
+  
   enabled = false
 }
 `, resourceName)
