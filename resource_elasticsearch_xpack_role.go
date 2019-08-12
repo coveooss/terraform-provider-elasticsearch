@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	elastic5 "gopkg.in/olivere/elastic.v5"
-	elastic6 "gopkg.in/olivere/elastic.v6"
 	elastic7 "github.com/olivere/elastic/v7"
+	elastic6 "gopkg.in/olivere/elastic.v6"
+	elastic5 "gopkg.in/olivere/elastic.v5"
 )
 
 func resourceElasticsearchXpackRole() *schema.Resource {
@@ -290,11 +291,14 @@ func elastic5PutRole(client *elastic5.Client, name string, body string) error {
 
 func elastic6PutRole(client *elastic6.Client, name string, body string) error {
 	_, err := client.XPackSecurityPutRole(name).Body(body).Do(context.Background())
+	log.Printf("[INFO] put error: %+v", err)
 	return err
 }
 
 func elastic7PutRole(client *elastic7.Client, name string, body string) error {
-	return errors.New("unsupported in elasticv7 client")
+	_, err := client.XPackSecurityPutRole(name).Body(body).Do(context.Background())
+	log.Printf("[INFO] put error: %+v", err)
+	return err
 }
 
 func elastic5GetRole(client *elastic5.Client, name string) (XPackSecurityRole, error) {
@@ -343,8 +347,43 @@ func elastic6GetRole(client *elastic6.Client, name string) (XPackSecurityRole, e
 }
 
 func elastic7GetRole(client *elastic7.Client, name string) (XPackSecurityRole, error) {
-	err := errors.New("unsupported in elasticv7 client")
-	return XPackSecurityRole{}, err
+	res, err := client.XPackSecurityGetRole(name).Do(context.Background())
+	if err != nil {
+		return XPackSecurityRole{}, err
+	}
+	obj := (*res)[name]
+	role := XPackSecurityRole{}
+	role.Name = name
+	role.Cluster = obj.Cluster
+	if data, err := json.Marshal(obj.Indices); err == nil {
+		if err := json.Unmarshal(data, &role.Indices); err != nil {
+			fmt.Printf("Data : %s\n", data)
+			return role, err
+		}
+	}
+
+	if data, err := json.Marshal(obj.Applications); err == nil {
+		if err := json.Unmarshal(data, &role.Applications); err != nil {
+			fmt.Printf("Data : %s\n", data)
+			return role, err
+		}
+	}
+	if global, err := json.Marshal(obj.Global); err != nil {
+		return role, err
+	} else {
+		// The Elastic API will not return the field unless it exists, which force us to check for null compared to Metadata
+		if string(global) == "null" {
+			role.Global = ""
+		} else {
+			role.Global = string(global)
+		}
+	}
+	if metadata, err := json.Marshal(obj.Metadata); err != nil {
+		return role, err
+	} else {
+		role.Metadata = string(metadata)
+	}
+	return role, err
 }
 
 func elastic5DeleteRole(client *elastic5.Client, name string) error {
@@ -358,7 +397,7 @@ func elastic6DeleteRole(client *elastic6.Client, name string) error {
 }
 
 func elastic7DeleteRole(client *elastic7.Client, name string) error {
-	err := errors.New("unsupported in elasticv7 client")
+	_, err := client.XPackSecurityDeleteRole(name).Do(context.Background())
 	return err
 }
 
