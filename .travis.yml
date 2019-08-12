@@ -28,18 +28,13 @@ before_install:
   - sudo sysctl -w vm.max_map_count=262144
   - docker-compose pull
   - docker-compose up -d
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" && ! $(which nc)     ]] ; then sudo apt-get install -y netcat ; fi
-  # - docker-compose -f docker-compose/docker-compose-${ES_VERSION}.yml pull
-  # - docker-compose -f docker-compose/docker-compose-${ES_VERSION}.yml up -d
-  # - n=0; until [ $n -ge 5 ]; do nc -vz localhost 9200 && break; n=$[$n+1];sleep $((n)); done
-  # - if [[ "$XPACK" == true ]] ; then n=0; until [ $n -ge 5 ]; do nc -vz localhost 9210 && break; n=$[$n+1];sleep $((n)); done
 install:
   - export ELASTICSEARCH_URL=http://127.0.0.1:9200 
   - export TF_LOG=INFO
   - env GO111MODULE=on go mod vendor
 script:
   - export GO111MODULE=on
-  - wget -q --waitretry=1 --retry-connrefused -T 30 -O - $ELASTICSEARCH_URL
+  - wget -q --waitretry=1 --retry-connrefused -T 60 -O - $ELASTICSEARCH_URL
   # Opendistro lazily initializes it's indexes, warm it up here :|
   # https://github.com/opendistro-for-elasticsearch/alerting/issues/60
   - |
