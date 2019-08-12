@@ -7,12 +7,7 @@ cache:
   directories:
     - $HOME/gopath/pkg/mod
 env:
-  # global:
-  #  - ELASTICSEARCH_SNIFF=false
-  #  - TF_ACC=1 
   matrix:
-  #  - ES_VERSION=5.5.3 ELASTICSEARCH_URL=http://localhost:9200
-  #  - ES_VERSION=6.5.1 XPACK=true ELASTICSEARCH_URL=http://localhost:9210
     - ES_VERSION=5.6.16 ES_OSS_IMAGE=elasticsearch:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION} ES_COMMAND="elasticsearch -Epath.repo=/tmp"
     - ES_VERSION=6.8.0 ES_OSS_IMAGE=docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION} ES_OPENDISTRO_IMAGE=amazon/opendistro-for-elasticsearch:0.9.0
     - ES_VERSION=7.0.1 ES_OSS_IMAGE=docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_VERSION} ES_IMAGE=docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
@@ -30,6 +25,7 @@ before_install:
   - sudo sysctl -w vm.max_map_count=262144
   - docker-compose pull
   - docker-compose up -d
+  - docker-compose ps
 install:
   - export ELASTICSEARCH_URL=http://127.0.0.1:9200 
   - export TF_LOG=INFO
@@ -38,7 +34,7 @@ script:
   - export GO111MODULE=on
   - wget --waitretry=1 --tries=50 --retry-connrefused -T 600 -O - http://127.0.0.1:9200
   - wget --waitretry=1 --tries=50 --retry-connrefused -T 600 -O - http://127.0.0.1:9210 
-  - if [ -n "$ES_OPENDISTRO_IMAGE" ]; then wget --waitretry=1 --tries=50 --retry-connrefused -T 600 -O - http://127.0.0.1:9220
+  - if [ -n "$ES_OPENDISTRO_IMAGE" ]; then wget --waitretry=1 --tries=50 --retry-connrefused -T 600 -O - http://127.0.0.1:9220; fi
   # Opendistro lazily initializes it's indexes, warm it up here :|
   # https://github.com/opendistro-for-elasticsearch/alerting/issues/60
   - |
