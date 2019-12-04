@@ -8,8 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	elastic7 "github.com/olivere/elastic/v7"
-	elastic6 "gopkg.in/olivere/elastic.v6"
 	elastic5 "gopkg.in/olivere/elastic.v5"
+	elastic6 "gopkg.in/olivere/elastic.v6"
 )
 
 func elastic7GetObject(client *elastic7.Client, objectType string, index string, id string) (*json.RawMessage, error) {
@@ -190,4 +190,38 @@ func optionalInterfaceJson(input string) interface{} {
 	} else {
 		return json.RawMessage(input)
 	}
+}
+
+func expandIndexPermissionsSet(resourcesArray []interface{}) ([]IndexPermissions, error) {
+	vperm := make([]IndexPermissions, 0, len(resourcesArray))
+	for _, item := range resourcesArray {
+		data, ok := item.(map[string]interface{})
+		if !ok {
+			return vperm, fmt.Errorf("Error asserting data as type []byte : %v", item)
+		}
+		obj := IndexPermissions{
+			IndexPatterns:  expandStringList(data["index_patterns"].(*schema.Set).List()),
+			Fls:            expandStringList(data["fls"].(*schema.Set).List()),
+			MaskedFields:   expandStringList(data["masked_fields"].(*schema.Set).List()),
+			AllowedActions: expandStringList(data["allowed_actions"].(*schema.Set).List()),
+		}
+		vperm = append(vperm, obj)
+	}
+	return vperm, nil
+}
+
+func expandTenantPermissionsSet(resourcesArray []interface{}) ([]TenantPermissions, error) {
+	vperm := make([]TenantPermissions, 0, len(resourcesArray))
+	for _, item := range resourcesArray {
+		data, ok := item.(map[string]interface{})
+		if !ok {
+			return vperm, fmt.Errorf("Error asserting data as type []byte : %v", item)
+		}
+		obj := TenantPermissions{
+			TenantPatterns: expandStringList(data["tenant_patterns"].(*schema.Set).List()),
+			AllowedActions: expandStringList(data["allowed_actions"].(*schema.Set).List()),
+		}
+		vperm = append(vperm, obj)
+	}
+	return vperm, nil
 }

@@ -121,6 +121,8 @@ func Provider() terraform.ResourceProvider {
 			"elasticsearch_watch":               resourceElasticsearchWatch(),
 			"elasticsearch_monitor":             resourceElasticsearchMonitor(),
 			"elasticsearch_destination":         resourceElasticsearchDestination(),
+			"elasticsearch_odfe_role":           resourceElasticsearchOdfeRole(),
+			"elasticsearch_odfe_roles_mapping":  resourceElasticsearchOdfeRolesMapping(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
