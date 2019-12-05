@@ -26,6 +26,8 @@ func TestAccElasticsearchOdfeRolesMapping(t *testing.T) {
 	switch meta.(type) {
 	case *elastic5.Client:
 		allowed = false
+	case *elastic6.Client:
+		allowed = false
 	default:
 		allowed = true
 	}
@@ -91,9 +93,6 @@ func testAccCheckElasticsearchOdfeRolesMappingDestroy(s *terraform.State) error 
 		case *elastic7.Client:
 			client := meta.(*elastic7.Client)
 			_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
-		case *elastic6.Client:
-			client := meta.(*elastic6.Client)
-			_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
 		default:
 		}
 
@@ -119,9 +118,6 @@ func testCheckElasticSearchOdfeRolesMappingExists(name string) resource.TestChec
 			switch meta.(type) {
 			case *elastic7.Client:
 				client := meta.(*elastic7.Client)
-				_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
-			case *elastic6.Client:
-				client := meta.(*elastic6.Client)
 				_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
 			default:
 			}
