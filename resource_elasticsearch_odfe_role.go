@@ -11,7 +11,6 @@ import (
 	"github.com/olivere/elastic/uritemplates"
 
 	elastic7 "github.com/olivere/elastic/v7"
-	elastic6 "gopkg.in/olivere/elastic.v6"
 )
 
 func resourceElasticsearchOdfeRole() *schema.Resource {
@@ -114,7 +113,7 @@ func resourceElasticsearchOdfeRoleCreate(d *schema.ResourceData, m interface{}) 
 func resourceElasticsearchOdfeRoleRead(d *schema.ResourceData, m interface{}) error {
 	res, err := resourceElasticsearchGetOdfeRole(d.Id(), m)
 
-	if elastic6.IsNotFound(err) || elastic7.IsNotFound(err) {
+	if elastic7.IsNotFound(err) {
 		log.Printf("[WARN] OdfeRole (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return nil
@@ -159,14 +158,8 @@ func resourceElasticsearchOdfeRoleDelete(d *schema.ResourceData, m interface{}) 
 			Method: "DELETE",
 			Path:   path,
 		})
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		_, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "DELETE",
-			Path:   path,
-		})
 	default:
-		err = errors.New("role resource not implemented prior to Elastic v6")
+		err = errors.New("role resource not implemented prior to Elastic v7")
 	}
 
 	return err
@@ -194,16 +187,8 @@ func resourceElasticsearchGetOdfeRole(roleID string, m interface{}) (RoleBody, e
 			Path:   path,
 		})
 		body = res.Body
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		var res *elastic6.Response
-		res, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "GET",
-			Path:   path,
-		})
-		body = res.Body
 	default:
-		err = errors.New("role resource not implemented prior to Elastic v6")
+		err = errors.New("role resource not implemented prior to Elastic v7")
 	}
 
 	if err != nil {
@@ -283,17 +268,8 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 			Body:   string(roleJSON),
 		})
 		body = res.Body
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		var res *elastic6.Response
-		res, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "PUT",
-			Path:   path,
-			Body:   string(roleJSON),
-		})
-		body = res.Body
 	default:
-		err = errors.New("role resource not implemented prior to Elastic v6")
+		err = errors.New("role resource not implemented prior to Elastic v7")
 	}
 
 	if err != nil {
