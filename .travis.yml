@@ -33,7 +33,7 @@ script:
   - export GO111MODULE=on
   - wget -q --waitretry=1 --retry-connrefused --tries=60 --timeout 60 -O - $ELASTICSEARCH_URL
   - if [ "$XPACK" ]; then wget -q --waitretry=5 --tries=50 --retry-connrefused -T 600 -O - http://elastic:elastic@127.0.0.1:9210; fi
-  - if [ -n "$ES_OPENDISTRO_IMAGE" ]; then wget -q --waitretry=5 --tries=50 --retry-connrefused -T 600 -O - http://admin@admin127.0.0.1:9220; fi
+  - if [ -n "$ES_OPENDISTRO_IMAGE" ]; then wget -q --waitretry=5 --tries=50 --retry-connrefused -T 600 -O - http://admin:admin@127.0.0.1:9220; fi
   # Opendistro lazily initializes it's indexes, warm it up here :|
   # https://github.com/opendistro-for-elasticsearch/alerting/issues/60
   - |
