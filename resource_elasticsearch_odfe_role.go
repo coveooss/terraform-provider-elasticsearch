@@ -259,7 +259,7 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 		Description:        d.Get("description").(string),
 	}
 	roleJSON, err := json.Marshal(rolesDefinition)
-	log.Printf("[INFO] No Server found: %s", roleJSON)
+
 	if err != nil {
 		return response, fmt.Errorf("Body Error : %s", roleJSON)
 	}

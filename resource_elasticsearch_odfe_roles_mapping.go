@@ -191,7 +191,7 @@ func resourceElasticsearchPutOdfeRolesMapping(d *schema.ResourceData, m interfac
 		AndBackendRoles: expandStringList(d.Get("and_backend_roles").(*schema.Set).List()),
 	}
 	roleJSON, err := json.Marshal(rolesMappingDefinition)
-	log.Printf("[INFO] No Server found: %s", roleJSON)
+
 	if err != nil {
 		return response, fmt.Errorf("Body Error : %s", roleJSON)
 	}
