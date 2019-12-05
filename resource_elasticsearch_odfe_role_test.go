@@ -38,7 +38,7 @@ func TestAccElasticsearchOdfeRole(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 			if !allowed {
-				t.Skip("Roles only supported on ES >= 6")
+				t.Skip("Roles only supported on ES >= 7")
 			}
 		},
 		Providers:    testAccOpendistroProviders,

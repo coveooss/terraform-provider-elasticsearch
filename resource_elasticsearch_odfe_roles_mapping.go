@@ -56,9 +56,7 @@ func resourceElasticsearchOdfeRolesMapping() *schema.Resource {
 }
 
 func resourceElasticsearchOdfeRolesMappingCreate(d *schema.ResourceData, m interface{}) error {
-	_, err := resourceElasticsearchPutOdfeRolesMapping(d, m)
-
-	if err != nil {
+	if _, err := resourceElasticsearchPutOdfeRolesMapping(d, m); err != nil {
 		log.Printf("[INFO] Failed to put role mapping: %+v", err)
 		return err
 	}
@@ -92,9 +90,7 @@ func resourceElasticsearchOdfeRolesMappingRead(d *schema.ResourceData, m interfa
 }
 
 func resourceElasticsearchOdfeRolesMappingUpdate(d *schema.ResourceData, m interface{}) error {
-	_, err := resourceElasticsearchPutOdfeRolesMapping(d, m)
-
-	if err != nil {
+	if _, err := resourceElasticsearchPutOdfeRolesMapping(d, m); err != nil {
 		return err
 	}
 
@@ -102,8 +98,6 @@ func resourceElasticsearchOdfeRolesMappingUpdate(d *schema.ResourceData, m inter
 }
 
 func resourceElasticsearchOdfeRolesMappingDelete(d *schema.ResourceData, m interface{}) error {
-	var err error
-
 	path, err := uritemplates.Expand("/_opendistro/_security/api/rolesmapping/{name}", map[string]string{
 		"name": d.Get("role_name").(string),
 	})

@@ -133,10 +133,6 @@ func resourceElasticsearchOdfeRoleRead(d *schema.ResourceData, m interface{}) er
 
 func resourceElasticsearchOdfeRoleUpdate(d *schema.ResourceData, m interface{}) error {
 	if _, err := resourceElasticsearchPutOdfeRole(d, m); err != nil {
-	    return err
-	}
-
-	if err != nil {
 		return err
 	}
 
@@ -208,7 +204,6 @@ func resourceElasticsearchGetOdfeRole(roleID string, m interface{}) (RoleBody, e
 }
 
 func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*RoleResponse, error) {
-	var err error
 	response := new(RoleResponse)
 
 	indexPermissions, err := expandIndexPermissionsSet(d.Get("index_permissions").(*schema.Set).List())
@@ -245,8 +240,8 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 		TenantPermissions:  tenantPermissionsBody,
 		Description:        d.Get("description").(string),
 	}
-	roleJSON, err := json.Marshal(rolesDefinition)
 
+	roleJSON, err := json.Marshal(rolesDefinition)
 	if err != nil {
 		return response, fmt.Errorf("Body Error : %s", roleJSON)
 	}
@@ -254,7 +249,6 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 	path, err := uritemplates.Expand("/_opendistro/_security/api/roles/{name}", map[string]string{
 		"name": d.Get("role_name").(string),
 	})
-
 	if err != nil {
 		return response, fmt.Errorf("error building URL path for role: %+v", err)
 	}
