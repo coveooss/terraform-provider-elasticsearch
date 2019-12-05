@@ -132,7 +132,9 @@ func resourceElasticsearchOdfeRoleRead(d *schema.ResourceData, m interface{}) er
 }
 
 func resourceElasticsearchOdfeRoleUpdate(d *schema.ResourceData, m interface{}) error {
-	_, err := resourceElasticsearchPutOdfeRole(d, m)
+	if _, err := resourceElasticsearchPutOdfeRole(d, m); err != nil {
+	    return err
+	}
 
 	if err != nil {
 		return err
