@@ -136,7 +136,7 @@ func testCheckElasticSearchOdfeRoleExists(name string) resource.TestCheckFunc {
 				return err
 			}
 
-			return fmt.Errorf("Role %q still exists", rs.Primary.ID)
+			return nil
 		}
 
 		return nil
