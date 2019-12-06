@@ -113,13 +113,12 @@ func resourceElasticsearchOdfeRoleCreate(d *schema.ResourceData, m interface{}) 
 func resourceElasticsearchOdfeRoleRead(d *schema.ResourceData, m interface{}) error {
 	res, err := resourceElasticsearchGetOdfeRole(d.Id(), m)
 
-	if elastic7.IsNotFound(err) {
-		log.Printf("[WARN] OdfeRole (%s) not found, removing from state", d.Id())
-		d.SetId("")
-		return nil
-	}
-
 	if err != nil {
+		if elastic7.IsNotFound(err) {
+			log.Printf("[WARN] OdfeRole (%s) not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

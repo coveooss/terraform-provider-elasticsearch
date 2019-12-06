@@ -70,13 +70,12 @@ func resourceElasticsearchOdfeRolesMappingCreate(d *schema.ResourceData, m inter
 func resourceElasticsearchOdfeRolesMappingRead(d *schema.ResourceData, m interface{}) error {
 	res, err := resourceElasticsearchGetOdfeRolesMapping(d.Id(), m)
 
-	if elastic7.IsNotFound(err) {
-		log.Printf("[WARN] OdfeRolesMapping (%s) not found, removing from state", d.Id())
-		d.SetId("")
-		return nil
-	}
-
 	if err != nil {
+		if elastic7.IsNotFound(err) {
+			log.Printf("[WARN] OdfeRolesMapping (%s) not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
