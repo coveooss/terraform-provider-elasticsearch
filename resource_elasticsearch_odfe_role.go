@@ -11,7 +11,6 @@ import (
 	"github.com/olivere/elastic/uritemplates"
 
 	elastic7 "github.com/olivere/elastic/v7"
-	elastic6 "gopkg.in/olivere/elastic.v6"
 )
 
 func resourceElasticsearchOdfeRole() *schema.Resource {
@@ -114,13 +113,12 @@ func resourceElasticsearchOdfeRoleCreate(d *schema.ResourceData, m interface{}) 
 func resourceElasticsearchOdfeRoleRead(d *schema.ResourceData, m interface{}) error {
 	res, err := resourceElasticsearchGetOdfeRole(d.Id(), m)
 
-	if elastic6.IsNotFound(err) || elastic7.IsNotFound(err) {
-		log.Printf("[WARN] OdfeRole (%s) not found, removing from state", d.Id())
-		d.SetId("")
-		return nil
-	}
-
 	if err != nil {
+		if elastic7.IsNotFound(err) {
+			log.Printf("[WARN] OdfeRole (%s) not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
@@ -133,9 +131,7 @@ func resourceElasticsearchOdfeRoleRead(d *schema.ResourceData, m interface{}) er
 }
 
 func resourceElasticsearchOdfeRoleUpdate(d *schema.ResourceData, m interface{}) error {
-	_, err := resourceElasticsearchPutOdfeRole(d, m)
-
-	if err != nil {
+	if _, err := resourceElasticsearchPutOdfeRole(d, m); err != nil {
 		return err
 	}
 
@@ -159,14 +155,8 @@ func resourceElasticsearchOdfeRoleDelete(d *schema.ResourceData, m interface{}) 
 			Method: "DELETE",
 			Path:   path,
 		})
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		_, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "DELETE",
-			Path:   path,
-		})
 	default:
-		err = errors.New("role resource not implemented prior to Elastic v6")
+		err = errors.New("role resource not implemented prior to Elastic v7")
 	}
 
 	return err
@@ -194,16 +184,8 @@ func resourceElasticsearchGetOdfeRole(roleID string, m interface{}) (RoleBody, e
 			Path:   path,
 		})
 		body = res.Body
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		var res *elastic6.Response
-		res, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "GET",
-			Path:   path,
-		})
-		body = res.Body
 	default:
-		err = errors.New("role resource not implemented prior to Elastic v6")
+		err = errors.New("role resource not implemented prior to Elastic v7")
 	}
 
 	if err != nil {
@@ -221,7 +203,6 @@ func resourceElasticsearchGetOdfeRole(roleID string, m interface{}) (RoleBody, e
 }
 
 func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*RoleResponse, error) {
-	var err error
 	response := new(RoleResponse)
 
 	indexPermissions, err := expandIndexPermissionsSet(d.Get("index_permissions").(*schema.Set).List())
@@ -258,8 +239,8 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 		TenantPermissions:  tenantPermissionsBody,
 		Description:        d.Get("description").(string),
 	}
+
 	roleJSON, err := json.Marshal(rolesDefinition)
-	log.Printf("[INFO] No Server found: %s", roleJSON)
 	if err != nil {
 		return response, fmt.Errorf("Body Error : %s", roleJSON)
 	}
@@ -267,7 +248,6 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 	path, err := uritemplates.Expand("/_opendistro/_security/api/roles/{name}", map[string]string{
 		"name": d.Get("role_name").(string),
 	})
-
 	if err != nil {
 		return response, fmt.Errorf("error building URL path for role: %+v", err)
 	}
@@ -283,17 +263,8 @@ func resourceElasticsearchPutOdfeRole(d *schema.ResourceData, m interface{}) (*R
 			Body:   string(roleJSON),
 		})
 		body = res.Body
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		var res *elastic6.Response
-		res, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "PUT",
-			Path:   path,
-			Body:   string(roleJSON),
-		})
-		body = res.Body
 	default:
-		err = errors.New("role resource not implemented prior to Elastic v6")
+		err = errors.New("role resource not implemented prior to Elastic v7")
 	}
 
 	if err != nil {

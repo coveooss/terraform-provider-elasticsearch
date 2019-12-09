@@ -11,7 +11,6 @@ import (
 	"github.com/olivere/elastic/uritemplates"
 
 	elastic7 "github.com/olivere/elastic/v7"
-	elastic6 "gopkg.in/olivere/elastic.v6"
 )
 
 func resourceElasticsearchOdfeRolesMapping() *schema.Resource {
@@ -57,9 +56,7 @@ func resourceElasticsearchOdfeRolesMapping() *schema.Resource {
 }
 
 func resourceElasticsearchOdfeRolesMappingCreate(d *schema.ResourceData, m interface{}) error {
-	_, err := resourceElasticsearchPutOdfeRolesMapping(d, m)
-
-	if err != nil {
+	if _, err := resourceElasticsearchPutOdfeRolesMapping(d, m); err != nil {
 		log.Printf("[INFO] Failed to put role mapping: %+v", err)
 		return err
 	}
@@ -73,13 +70,12 @@ func resourceElasticsearchOdfeRolesMappingCreate(d *schema.ResourceData, m inter
 func resourceElasticsearchOdfeRolesMappingRead(d *schema.ResourceData, m interface{}) error {
 	res, err := resourceElasticsearchGetOdfeRolesMapping(d.Id(), m)
 
-	if elastic6.IsNotFound(err) || elastic7.IsNotFound(err) {
-		log.Printf("[WARN] OdfeRolesMapping (%s) not found, removing from state", d.Id())
-		d.SetId("")
-		return nil
-	}
-
 	if err != nil {
+		if elastic7.IsNotFound(err) {
+			log.Printf("[WARN] OdfeRolesMapping (%s) not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
@@ -93,9 +89,7 @@ func resourceElasticsearchOdfeRolesMappingRead(d *schema.ResourceData, m interfa
 }
 
 func resourceElasticsearchOdfeRolesMappingUpdate(d *schema.ResourceData, m interface{}) error {
-	_, err := resourceElasticsearchPutOdfeRolesMapping(d, m)
-
-	if err != nil {
+	if _, err := resourceElasticsearchPutOdfeRolesMapping(d, m); err != nil {
 		return err
 	}
 
@@ -103,8 +97,6 @@ func resourceElasticsearchOdfeRolesMappingUpdate(d *schema.ResourceData, m inter
 }
 
 func resourceElasticsearchOdfeRolesMappingDelete(d *schema.ResourceData, m interface{}) error {
-	var err error
-
 	path, err := uritemplates.Expand("/_opendistro/_security/api/rolesmapping/{name}", map[string]string{
 		"name": d.Get("role_name").(string),
 	})
@@ -119,14 +111,8 @@ func resourceElasticsearchOdfeRolesMappingDelete(d *schema.ResourceData, m inter
 			Method: "DELETE",
 			Path:   path,
 		})
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		_, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "DELETE",
-			Path:   path,
-		})
 	default:
-		err = errors.New("role mapping resource not implemented prior to Elastic v6")
+		err = errors.New("role mapping resource not implemented prior to Elastic v7")
 	}
 
 	return err
@@ -153,16 +139,8 @@ func resourceElasticsearchGetOdfeRolesMapping(roleID string, m interface{}) (Rol
 			Path:   path,
 		})
 		body = res.Body
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		var res *elastic6.Response
-		res, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "GET",
-			Path:   path,
-		})
-		body = res.Body
 	default:
-		err = errors.New("role mapping  resource not implemented prior to Elastic v6")
+		err = errors.New("role mapping  resource not implemented prior to Elastic v7")
 	}
 
 	if err != nil {
@@ -191,7 +169,7 @@ func resourceElasticsearchPutOdfeRolesMapping(d *schema.ResourceData, m interfac
 		AndBackendRoles: expandStringList(d.Get("and_backend_roles").(*schema.Set).List()),
 	}
 	roleJSON, err := json.Marshal(rolesMappingDefinition)
-	log.Printf("[INFO] No Server found: %s", roleJSON)
+
 	if err != nil {
 		return response, fmt.Errorf("Body Error : %s", roleJSON)
 	}
@@ -215,17 +193,8 @@ func resourceElasticsearchPutOdfeRolesMapping(d *schema.ResourceData, m interfac
 			Body:   string(roleJSON),
 		})
 		body = res.Body
-	case *elastic6.Client:
-		client := m.(*elastic6.Client)
-		var res *elastic6.Response
-		res, err = client.PerformRequest(context.TODO(), elastic6.PerformRequestOptions{
-			Method: "PUT",
-			Path:   path,
-			Body:   string(roleJSON),
-		})
-		body = res.Body
 	default:
-		err = errors.New("role mapping resource not implemented prior to Elastic v6")
+		err = errors.New("role mapping resource not implemented prior to Elastic v7")
 	}
 
 	if err != nil {

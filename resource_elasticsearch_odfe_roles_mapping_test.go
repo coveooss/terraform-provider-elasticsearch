@@ -26,6 +26,8 @@ func TestAccElasticsearchOdfeRolesMapping(t *testing.T) {
 	switch meta.(type) {
 	case *elastic5.Client:
 		allowed = false
+	case *elastic6.Client:
+		allowed = false
 	default:
 		allowed = true
 	}
@@ -36,7 +38,7 @@ func TestAccElasticsearchOdfeRolesMapping(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 			if !allowed {
-				t.Skip("Roles only supported on ES >= 6")
+				t.Skip("Roles only supported on ES >= 7")
 			}
 		},
 		Providers:    testAccOpendistroProviders,
@@ -91,9 +93,6 @@ func testAccCheckElasticsearchOdfeRolesMappingDestroy(s *terraform.State) error 
 		case *elastic7.Client:
 			client := meta.(*elastic7.Client)
 			_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
-		case *elastic6.Client:
-			client := meta.(*elastic6.Client)
-			_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
 		default:
 		}
 
@@ -120,9 +119,6 @@ func testCheckElasticSearchOdfeRolesMappingExists(name string) resource.TestChec
 			case *elastic7.Client:
 				client := meta.(*elastic7.Client)
 				_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
-			case *elastic6.Client:
-				client := meta.(*elastic6.Client)
-				_, err = resourceElasticsearchGetOdfeRolesMapping(rs.Primary.ID, client)
 			default:
 			}
 
@@ -130,7 +126,7 @@ func testCheckElasticSearchOdfeRolesMappingExists(name string) resource.TestChec
 				return err
 			}
 
-			return fmt.Errorf("Role %q still exists", rs.Primary.ID)
+			return nil
 		}
 
 		return nil
