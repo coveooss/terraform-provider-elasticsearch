@@ -38,7 +38,7 @@ script:
   # https://github.com/opendistro-for-elasticsearch/alerting/issues/60
   - |
     if [ -n "$ES_OPENDISTRO_IMAGE" ]; then
-      wget -q --waitretry=1 --retry-connrefused --tries=60 --timeout 60 -O - 127.0.0.1:9220
+      wget -q --waitretry=1 --retry-connrefused --tries=60 --timeout 60 --user admin --password admin -O - 127.0.0.1:9220
       curl -X POST -H 'Content-type: application/json'  -d '{"name":"_warmup","type":"slack","slack":{"url": "http://www.example.com"}}' http://admin:admin@127.0.0.1:9220/_opendistro/_alerting/destinations
     fi
   # enforce formatting
