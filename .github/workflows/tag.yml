@@ -3,11 +3,21 @@ on:
   push:
     tags:
       - "*"
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write  # for goreleaser/goreleaser-action to create a GitHub release
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Setup Go
         uses: actions/setup-go@v1
         with:
